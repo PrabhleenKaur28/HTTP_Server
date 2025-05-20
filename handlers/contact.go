@@ -6,19 +6,20 @@ import (
 )
 
 func ContactHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		r.ParseForm()
-		name := r.FormValue("name")
-		message := r.FormValue("message")
-		fmt.Fprintf(w, "Thanks %s, we got your message: %s", name, message)
+	if r.Method == http.MethodGet {
+		http.ServeFile(w, r, "./static/contact.html")
 		return
 	}
 
-	fmt.Fprintln(w, `
-		<form method="POST" action="/contact">
-			Name: <input name="name"><br>
-			Message: <textarea name="message"></textarea><br>
-			<input type="submit">
-		</form>
-	`)
+	if r.Method == http.MethodPost {
+		name := r.FormValue("name")
+		email := r.FormValue("email")
+		message := r.FormValue("message")
+
+		// Use all variables
+		fmt.Fprintf(w, "Thanks %s!\n\nWe received your message:\n\"%s\"\n\nWe'll contact you at: %s", name, message, email)
+		return
+	}
+
+	http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 }
