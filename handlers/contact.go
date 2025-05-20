@@ -3,23 +3,42 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
+
+	"github.com/PrabhleenKaur28/HTTP_Server/db"
 )
 
 func ContactHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
+	switch r.Method {
+	case http.MethodGet:
 		http.ServeFile(w, r, "./static/contact.html")
 		return
-	}
 
-	if r.Method == http.MethodPost {
-		name := r.FormValue("name")
-		email := r.FormValue("email")
-		message := r.FormValue("message")
+	case http.MethodPost:
+		name := strings.TrimSpace(r.FormValue("name"))
+		email := strings.TrimSpace(r.FormValue("email"))
+		message := strings.TrimSpace(r.FormValue("message"))
 
-		// Use all variables
-		fmt.Fprintf(w, "Thanks %s!\n\nWe received your message:\n\"%s\"\n\nWe'll contact you at: %s", name, message, email)
+		// Simple validation
+		if name == "" || email == "" || message == "" {
+			http.Error(w, "All fields are required!", http.StatusBadRequest)
+			return
+		}
+
+		// Insert into PostgreSQL
+		query := `INSERT INTO contacts (name, email, message, submitted_at) VALUES ($1, $2, $3, $4)`
+		_, err := db.DB.Exec(query, name, email, message, time.Now())
+		if err != nil {
+			fmt.Println("Error inserting into DB:", err)
+			http.Error(w, "Failed to save your message. Please try again later.", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintln(w, "✅ Thank you! Your message has been received.")
 		return
-	}
 
-	http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
 }
