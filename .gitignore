@@ -1,4 +1,3 @@
-# Ignore Go build files
 *.exe
 *.out
 *.mod
