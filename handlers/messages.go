@@ -23,10 +23,10 @@ func MessagesHandler(w http.ResponseWriter, r *http.Request) {
 	// Query all messages ordered by submission date desc
 	rows, err := db.DB.Query(`SELECT id, name, email, message, submitted_at FROM contacts ORDER BY submitted_at DESC`)
 	if err != nil {
-		http.Error(w, "Error fetching messages", http.StatusInternalServerError)
-		fmt.Println("DB query error:", err)
-		return
-	}
+        showError(w, "Sorry, we're having trouble loading messages. Please try again later.")
+        fmt.Println("DB query error:", err)
+        return
+    }
 	defer rows.Close()
 
 	messages := []ContactMessage{}
@@ -41,43 +41,48 @@ func MessagesHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		messages = append(messages, msg)
 	}
-
-	const tpl = `
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<title>Contact Messages</title>
-			<style>
-				table { border-collapse: collapse; width: 100%; }
-				th, td { border: 1px solid #ccc; padding: 8px; }
-				th { background: #f4f4f4; }
-			</style>
-		</head>
-		<body>
-			<h1>Contact Messages</h1>
-			<table>
-				<tr>
-					<th>ID</th><th>Name</th><th>Email</th><th>Message</th><th>Submitted At</th>
-				</tr>
-				{{range .}}
-					<tr>
-						<td>{{.ID}}</td>
-						<td>{{.Name}}</td>
-						<td>{{.Email}}</td>
-						<td>{{.Message}}</td>
-						<td>{{.SubmittedAt.Format "2006-01-02 15:04:05"}}</td>
-					</tr>
-				{{else}}
-					<tr><td colspan="5">No messages found</td></tr>
-				{{end}}
-			</table>
-		</body>
-		</html>`
-
-	t := template.Must(template.New("messages").Parse(tpl))
+	t, err := template.ParseFiles("templates/messages.html")
+    if err != nil {
+        http.Error(w, "Error loading template", http.StatusInternalServerError)
+        fmt.Println("Template error:", err)
+        return
+    }
 	err = t.Execute(w, messages)
 	if err != nil {
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		fmt.Println("Template exec error:", err)
 	}
+}
+
+func showError(w http.ResponseWriter, message string) {
+    w.WriteHeader(http.StatusInternalServerError)
+    fmt.Fprintf(w, `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error</title>
+            <link rel="stylesheet" href="/static/css/admin.css">
+        </head>
+        <body>
+            <div class="error">%s</div>
+        </body>
+        </html>
+    `, message)
+}
+
+func DeleteMessageHandler(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    id := r.FormValue("id")
+    _, err := db.DB.Exec("DELETE FROM contacts WHERE id = $1", id)
+    if err != nil {
+        http.Error(w, "Error deleting message", http.StatusInternalServerError)
+        return
+    }
+
+    // Redirect back to messages page
+    http.Redirect(w, r, "/admin/messages", http.StatusSeeOther)
 }

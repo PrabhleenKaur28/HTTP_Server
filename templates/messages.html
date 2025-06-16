@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Messages</title>
+    <link rel="stylesheet" href="messages.css">
+    <style>
+    table {
+        counter-reset: rowNumber;
+    }
+    table tbody tr {
+        counter-increment: rowNumber;
+    }
+    table tbody tr td:first-child::before {
+        content: counter(rowNumber);
+    }
+</style>
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a> |
+        <a href="/contact">Contact</a> |
+        <a href="/admin/messages">Messages</a>
+    </nav>
+    <h1>Contact Messages</h1>
+<table>
+    <thead>
+        <tr>
+            <th>#</th>  
+            <th>Name</th>
+            <th>Email</th>
+            <th>Message</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .}}
+        <tr>
+            <td></td> <!-- This will be filled by CSS counter -->
+            <td>{{.Name}}</td>
+            <td>{{.Email}}</td>
+            <td>{{.Message}}</td>
+            <td>{{.SubmittedAt.Format "Jan 2, 2006 3:04 PM"}}</td>
+            <td>
+                <form action="/admin/messages/delete" method="POST">
+                    <input type="hidden" name="id" value="{{.ID}}">
+                    <button type="submit" class="delete-btn">🗑️ Delete</button>
+                </form>
+            </td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+</body>
+</html>

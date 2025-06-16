@@ -33,7 +33,8 @@ func main() {
 	// API routes
 	mux.HandleFunc("/", middleware.Logger(handlers.HomeHandler))
 	mux.HandleFunc("/contact", middleware.Logger(handlers.ContactHandler))
-	mux.HandleFunc("/admin/messages", middleware.Logger(handlers.MessagesHandler))
+	mux.HandleFunc("/admin/messages", middleware.Logger(middleware.BasicAuth(handlers.MessagesHandler)))
+	mux.HandleFunc("/admin/messages/delete", middleware.Logger(middleware.BasicAuth(handlers.DeleteMessageHandler)))
 
 	fmt.Println("Server is running at http://localhost:8080")
 	err = http.ListenAndServe(":8080", mux)
