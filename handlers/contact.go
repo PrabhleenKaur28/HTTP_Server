@@ -28,7 +28,9 @@ func ContactHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Insert into PostgreSQL
 		query := `INSERT INTO contacts (name, email, message, submitted_at) VALUES ($1, $2, $3, $4)`
-		_, err := db.DB.Exec(query, name, email, message, time.Now())
+		_, err := db.DB.Exec(query, name, email, message, time.Now())//runs the SQL query with the actual values
+		//Exec() returns 2 values: Result(After insertion, these many rows were affected), err
+		//_ ignores the result(we know result is also returned but we don't need the result here)
 		if err != nil {
 			fmt.Println("Error inserting into DB:", err)
 			http.Error(w, "Failed to save your message. Please try again later.", http.StatusInternalServerError)

@@ -27,13 +27,15 @@ func MessagesHandler(w http.ResponseWriter, r *http.Request) {
         fmt.Println("DB query error:", err)
         return
     }
-	defer rows.Close()
+	defer rows.Close()//schedules the rows to be closed when func exits to prevent resource leaks
+	//defer ensures cleanup happens no matter how the func exits: normally, early return or panic. Hence, better than manually closing at each return point
+	//Databases have a limited number of simultaneous connections they can handle. When we execute a query, it uses one of these connections. Closing the rows releases the connection back to the pool. If we forget to close rows, connections remain occupied, and eventually the database will refuse new requests when all connections are exhausted.
 
-	messages := []ContactMessage{}
+	messages := []ContactMessage{}//creates an empty slice[] (arraylist(flexible)) to hold messages
 
-	for rows.Next() {
+	for rows.Next() {//returns false if no more rows
 		var msg ContactMessage
-		err := rows.Scan(&msg.ID, &msg.Name, &msg.Email, &msg.Message, &msg.SubmittedAt)
+		err := rows.Scan(&msg.ID, &msg.Name, &msg.Email, &msg.Message, &msg.SubmittedAt)// rows.Scan() reads columns from current row and &msg.Field provides memory addresses to store each value
 		if err != nil {
 			http.Error(w, "Error reading messages", http.StatusInternalServerError)
 			fmt.Println("Row scan error:", err)

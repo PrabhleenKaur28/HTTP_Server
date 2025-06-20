@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"log"
-	"net/http"
-	"time"
+	"log" //logging
+	"net/http" //HTTP handling
+	"time" //Time functions
 )
 
 func Logger(next http.HandlerFunc) http.HandlerFunc {
